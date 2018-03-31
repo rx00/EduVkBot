@@ -6,6 +6,7 @@ from handlers import main_handler
 TOKEN = "## ваш токен ##"
 
 API = vk.API(vk.Session(access_token=TOKEN))
+API_VERSION = 5.67
 LAST_MSG_ID = 0
 
 
@@ -14,9 +15,11 @@ def handle_message(message: Message):
     if answer is None:
         return
     if isinstance(answer, str):
-        API.messages.send(user_id=message.user_id, message=answer, v=5.67)
+        API.messages.send(user_id=message.user_id, message=answer, v=API_VERSION)
+        time.sleep(0.33)
     elif isinstance(answer, int):
-        API.messages.send(user_id=message.user_id, sticker_id=answer, v=5.67)
+        API.messages.send(user_id=message.user_id, sticker_id=answer, v=API_VERSION)
+        time.sleep(0.33)
     else:
         print("Не удалось отправить сообщение, "
               "тк main_handler вернул некорректный ответ! (ожидался <int> или <str>, получен {})".format(type(answer)))
@@ -25,7 +28,8 @@ def handle_message(message: Message):
 def make_bot_request():
     global LAST_MSG_ID
     try:
-        request = API.messages.get(count=20, v=5.67)
+        request = API.messages.get(count=50, v=API_VERSION, last_message_id=LAST_MSG_ID)  #
+        # ожидается, что бот будет получать не более 50 сообщений в секунду)
         if "error" in request:
             raise MessageParsingError("Ошибка API ({})".format(request["error"]))
         if not LAST_MSG_ID:
@@ -47,7 +51,7 @@ print("Bot started...")
 while True:
     try:
         make_bot_request()
-        time.sleep(1)
+        time.sleep(1) # опрос api раз в секунду (не чаще, иначе могут забанить бота %) )
     except KeyboardInterrupt:
         print("Останавливаем бота...")
         exit()
